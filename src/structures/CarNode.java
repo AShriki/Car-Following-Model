@@ -11,7 +11,7 @@ public class CarNode {
 	private double vRxn;
 	private int timer;
 	private double savedVelocity;
-	double[] ap; // acceleration profile
+	double[] vp; // velocity profile
 	int[] tp; // number of time steps each action will last for
 	CarNode next;
 	
@@ -39,14 +39,14 @@ public class CarNode {
 		if(prof != null && tprof != null){
 			isLeader = true;
 			tp = tprof;
-			ap = prof;
+			vp = prof;
 		}
 	}
 	
 	public void setFollower(){
 		isLeader = false;
 		tp = null;
-		ap= null;
+		vp= null;
 	}
 	
 	public void setPosY(int y) {
@@ -85,31 +85,32 @@ public class CarNode {
 		return vRxn;
 	}
 
-	private boolean incrementTimer(int timeStep){
-				
-		timer -= timeStep;
-		
-		if(isLeader){ 
-		} 
-		else if(timer <= 0){
-			
-			timer = rxnTime;
-			return true;
-		}
-		
-		return false;
-	}
 	public void print(){
 		System.out.println("X: "+ this.getPosX() + " Y: " + this.getPosY() + " V: " + this.getVel() + " A: " + this.getAccel());
 	}
-	public void update(int timeStep){
+	
+	public void update(int timeStep){// reformat to minimize statements
 		if(next != null){
-			
+			if(timer == 0){
+				//perform update from ap
+				// if there is no update from ap, do nothing (i.e. maintain velocity)
+			}
+			else{ // timer is in countdown
+				// continue to change based on velocity profile
+			}
 		}
 		else{
-			
+			if(timer == 0){
+				//save the velocity of the car in front and set the timer unless there is no change in velocity
+				// if there is a change in velocity set the timer
+			}
+			else{// timer is in countdown
+				//continue acceleration to try to reach car velocity
+				//try to maintain a safe distance from the car in front (this means some kind of compensation based on the distance to the car in front)
+			}
 		}
 	}
+	
 	public void update(){
 		update(1);
 	}
