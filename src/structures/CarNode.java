@@ -10,11 +10,13 @@ public class CarNode {
 	private int rxnTime;
 	private double vRxn;
 	private int timer;
-	private double savedVelocity;
+	private double goalVelocity;
 	double[] vp; // velocity profile
 	int[] tp; // number of time steps each action will last for
+	int vStep = 0; // index of vp and tp
 	CarNode next;
 	
+	double tau;
 	public CarNode (int posX, int posY, int vel, int accel, int rTime, CarNode inFront){
 		positionX = posX;
 		positionY = posY;
@@ -24,7 +26,8 @@ public class CarNode {
 		vRxn = 0;
 		timer = 0;
 		next = inFront;
-		savedVelocity = 0;
+		goalVelocity = 0;
+		tau = 1;
 	}
 	
 	public boolean isLeader(){
@@ -69,12 +72,12 @@ public class CarNode {
 		return acceleration;
 	}
 	
-	public double setVel() {
-		return velocity;
+	public void setVel(double vel) {
+		velocity = vel;
 	}
 	
-	public double setAccel() {
-		return acceleration;
+	public void setAccel(double accel) {
+		acceleration = accel;
 	}
 	
 	public int getRxnTime(){
@@ -89,30 +92,50 @@ public class CarNode {
 		System.out.println("X: "+ this.getPosX() + " Y: " + this.getPosY() + " V: " + this.getVel() + " A: " + this.getAccel());
 	}
 	
-	public void update(int timeStep){// reformat to minimize statements
-		if(next != null){
+	public void update(int timeUnit){// reformat to minimize statements
+		if(isLeader){
 			if(timer == 0){
-				//perform update from ap
-				// if there is no update from ap, do nothing (i.e. maintain velocity)
+				if(vp.length > vStep ){
+					
+					goalVelocity = vp[vStep];
+					timer = tp[vStep++];
+					
+					this.setAccel((goalVelocity - this.getVel()) / timer);
+					this.setVel(this.getVel() + timeUnit*this.getAccel());
+					
+					timer--;
+				}
+				else{
+					this.setAccel(0);
+					this.setVel(this.getVel());
+				}// end acceleration setter
 			}
-			else{ // timer is in countdown
-				// continue to change based on velocity profile
+			
+			else{ // timer is in countdown, update the velocity and timer;
+				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				
+				timer--;
 			}
 		}
 		else{
 			if(timer == 0){
 				//save the velocity of the car in front and set the timer unless there is no change in velocity
 				// if there is a change in velocity set the timer
+				goalVelocity = next.getVel();
+				
+				this.setAccel((1/tau)*(goalVelocity - this.getVel()) / timer);
+				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				
+				timer--;
 			}
 			else{// timer is in countdown
 				//continue acceleration to try to reach car velocity
 				//try to maintain a safe distance from the car in front (this means some kind of compensation based on the distance to the car in front)
+				if()
+				
+				timer--;
 			}
 		}
-	}
-	
-	public void update(){
-		update(1);
 	}
 
 }
