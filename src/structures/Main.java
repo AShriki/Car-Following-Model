@@ -6,21 +6,24 @@ public class Main {
 	public static void main(String[] args) {
 		int t=5;// t is the number of cars
 		
-		double[] ap = {8,7,-6,2,9,100,60,23}; // acceleration profile
-		int[] tp = {7,6,2,9,100,60,23}; // number of time steps each action will last for
+		double tStep = 10/1000.0;
+		
+		double[] vp = {8,7,-6,2,9,100,60,23}; // acceleration profile
+		int[] tp = {800,600,200,900,200,450,230}; // number of time steps each action will last for
 		// what happens if a profile has a zero in it?
 		
 		CarNode[] cars = new CarNode[t];
 		
-		cars = populateCars(t, ap, tp);
+		cars = populateCars(t, vp, tp);
 		
 		int timeSteps = calcTimeSteps(tp,cars); // worst case, max timesteps that might be necessary
 		
 		for(int i=0; i < timeSteps; i++){ // work loop
-			
+			for(CarNode z : cars){
+				z.update(tStep);// time step
+			}
 		}
 	}
-
 	
 	private static CarNode[] populateCars(int numCars,double ap[],int tp[]){
 		
@@ -36,11 +39,11 @@ public class Main {
 			Random rnd = new Random();
 			int rxnTime = (rnd.nextInt(10)+1)*10;// rxn time from 10ms to 100ms
 			
-			cars[0] = new CarNode(0,0, 0, 0, rxnTime,null);
+			cars[0] = new CarNode(0,0, 0, 0, rxnTime, safetyGap,null);
 			
 			for(int i = 1; i < numCars; i++){
 				rxnTime = (rnd.nextInt(10)+1)*10;
-				cars[i] = new CarNode(0,i*carLength+i*safetyGap, 0, 0, rxnTime,cars[i-1]);
+				cars[i] = new CarNode(0,-(i*carLength+i*safetyGap), 0, 0, rxnTime,carLength,cars[i-1]);
 			}
 			cars[0].setLeader(ap, tp);
 			
