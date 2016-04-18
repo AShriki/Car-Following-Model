@@ -8,28 +8,27 @@ public class CarNode {
 	private double acceleration;
 	private boolean isLeader = false;
 	private int rxnTime;
-	private double vRxn;
 	private int timer;
 	private double goalVelocity;
 	private double[] vp; // velocity profile
 	private int[] tp; // number of time steps each action will last for
-	private int vStep = 0; // index of vp and tp
 	private CarNode next;
 	private double safeGap;
+	double timeUnit;
 	public double tau;
 	
-	public CarNode (int posX, int posY, int vel, int accel, int rTime, double safeGap ,CarNode inFront){
+	public CarNode (int posX, int posY, int vel, int accel, int rTime, double safeGap, double timeUnit ,CarNode inFront){
 		this.posX = posX;
 		this.posY = posY;
 		velocity = vel;
 		acceleration = accel;
 		rxnTime = rTime;
-		vRxn = 0;
 		timer = 0;
 		next = inFront;
 		goalVelocity = 0;
 		tau = 1;
 		this.safeGap = safeGap;
+		this.timeUnit = timeUnit;
 	}
 	
 	public boolean isLeader(){
@@ -85,40 +84,38 @@ public class CarNode {
 	public int getRxnTime(){
 		return rxnTime;
 	}
-	
-	public double setVrxn(){
-		return vRxn;
-	}
 
 	public void print(){
 		System.out.println("X: "+ this.getPosX() + " Y: " + this.getPosY() + " V: " + this.getVel() + " A: " + this.getAccel());
 	}
 	
-	public void update(double timeUnit){// time per iteration in the work loop
+	public void update(int index){// time per iteration in the work loop
 		if(isLeader){
 			if(timer == 0){
-				if(vp.length > vStep ){
+				if(vp.length > index){
 					
-					
-					
-					goalVelocity = vp[vStep];
-					timer = tp[vStep++];
+					goalVelocity = vp[index];
+					timer = tp[index];
 					
 					this.setAccel((goalVelocity - this.getVel()) / (timer*timeUnit));
 					this.setVel(this.getVel() + timeUnit*this.getAccel());
+					
+					this.setPosY(this.getPosY() + timeUnit*this.getVel()); // update position
 					
 					timer--;
 				}
 				else{
 					this.setAccel(0);
 					this.setVel(this.getVel());
-					this.setPosY(this.getPosY()+timeUnit*velocity);
+					this.setPosY(this.getPosY() + timeUnit*this.getVel()); // update position
 				}// end acceleration setter
 			}
 			
 			else{ // timer is in countdown, update the velocity and timer;
 			
 				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				
+				this.setPosY(this.getPosY() + timeUnit*this.getVel()); // update position
 				
 				timer--;
 			}
@@ -130,11 +127,11 @@ public class CarNode {
 				
 				goalVelocity = next.getVel();
 				if(next.getPosY()- safeGap < (this.getPosY()) + safeGap){ // if the car in front is located within the safety gap of the car of interest
-					if(goalVelocity > velocity){
+					if(goalVelocity > this.getVel()){
 						//accelerate at half or quarter speed until safety gap is restored
 						this.setAccel((1/(2*tau))*(goalVelocity - this.getVel()));
 					}
-					else if(goalVelocity < velocity){
+					else if(goalVelocity < this.getVel()){
 						// neg. acceleration should be multplied by a negative 2*  the calculated acceleration
 						this.setAccel(-(2/(tau))*(goalVelocity - this.getVel()));
 					}
@@ -145,12 +142,16 @@ public class CarNode {
 				}
 
 				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				this.setPosY(this.getPosY()+timeUnit*this.getVel()); // update position
 
 				timer--;
 			}
 			else{// timer is in countdown
 				//continue acceleration to try to reach car velocity
 				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				
+				this.setPosY(this.getPosY()+timeUnit*this.getVel()); // update position
+				
 				timer--;
 			}
 		}
