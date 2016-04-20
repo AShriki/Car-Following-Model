@@ -122,13 +122,13 @@ public class Main {
 			}
 			else
 				rxnTime = 0.25;
-			cars[0] = new CarNode(0,0, 0, 0, safetyGap,tStep,null);
+			cars[0] = new CarNode(0,0, 0, 0, safetyGap,tStep,carLength,null);
 			
 			for(int i = 1; i < numCars; i++){
 				if(RRX == 1){
 					rxnTime = (rnd.nextInt(100)+1)*10;
 				}
-				cars[i] = new CarNode(-(i*carLength+i*safetyGap),0, 0, rxnTime,safetyGap,tStep,cars[i-1]);
+				cars[i] = new CarNode(-(i*carLength+i*safetyGap),0, 0, rxnTime,safetyGap,tStep,carLength,cars[i-1]);
 			}
 			cars[0].setLeader(ap, tp);
 			

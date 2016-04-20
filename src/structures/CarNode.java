@@ -13,11 +13,15 @@ public class CarNode {
 	private int[] tp; // number of time steps each action will last for
 	private CarNode next;
 	private double safeGap;
-	double timeUnit;
+	private double timeUnit;
 	private double tau;
-	int index;
-	int leaderActive;
-	public CarNode (int pos, int vel, int accel, double rTime, double safeGap, double timeUnit ,CarNode inFront){
+	private int index;
+	private double carLength;
+	private int leaderActive;
+	
+	boolean adaptiveModel = true;
+	
+	public CarNode (int pos, int vel, int accel, double rTime, double safeGap, double timeUnit,double carLength ,CarNode inFront){
 		
 		this.pos = pos;
 		velocity = vel;
@@ -30,7 +34,21 @@ public class CarNode {
 		this.safeGap = safeGap;
 		this.timeUnit = timeUnit;
 		index = 0;
+		this.carLength = carLength;
 			
+	}
+	private double getCarLength(){
+		return carLength;
+	}
+	public double getTimeUnit(){
+		return timeUnit;
+	}
+	private void setSafeGap(double s){
+		safeGap = carLength*s;
+	}
+	
+	public double getSafeGap() {
+		return safeGap;
 	}
 	
 	public boolean isLeader(){
@@ -62,6 +80,13 @@ public class CarNode {
 
 	public double getVel() {
 		return velocity;
+	}
+	
+	public double getGoalVel() {
+		return goalVelocity;
+	}
+	public void setGoalVel(double v) {
+		goalVelocity = v;
 	}
 	
 	public double getAccel() {
@@ -98,20 +123,20 @@ public class CarNode {
 					index++;
 				}
 					
-				this.setAccel((goalVelocity - this.getVel()) / (timer*timeUnit));
-				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				this.setAccel((goalVelocity - this.getVel()) / (timer*this.getTimeUnit()));
+				this.setVel(this.getVel() + this.getTimeUnit()*this.getAccel());
 										
 			}
 			else{
 				this.setAccel(0);
-				this.setPos(this.getPos() + timeUnit*this.getVel()); // update position
+				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()); 
 				this.setVel(this.getVel());
 			}// end acceleration setter
 			
 			
-			this.setPos(this.getPos() + timeUnit*this.getVel()); // update position
+			this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()); // update position
 								
-			timer -= 1;
+			timer -= 1; // the leader counts time steps
 			
 		}
 		else{// is follower
@@ -119,33 +144,49 @@ public class CarNode {
 				//save the velocity of the car in front and set the timer unless there is no change in velocity
 				// if there is a change in velocity set the timer
 				if(timer <= 0){
-					goalVelocity = next.getVel();
+					this.setGoalVel(next.getVel());
 					this.timer = this.getRxnTime();
 				}
 				
-				if(next.getPos()- safeGap < (this.getPos()) + safeGap){ // if the car in front is located within the safety gap of the car of interest
-						this.setAccel((1/((tau())))*(goalVelocity - this.getVel()));
-				}
-				else if(next.getPos()- safeGap > (this.getPos()) + safeGap){ // the front car is located too far in front of the safety gap
-						this.setAccel((1/(tau()))*(goalVelocity - this.getVel())); // accelerate at 1.5 the normal rate
-				}
-				else{
-					// normal acceleration change
-					this.setAccel((1/tau())*(goalVelocity - this.getVel()));
-				}
+				this.setAccel(tau()*(this.getGoalVel() - this.getVel())); // update acceleration
 							
-				this.setVel(this.getVel() + timeUnit*this.getAccel());
+				this.setVel(this.getVel() + this.getTimeUnit()*this.getAccel()); // update velocity
+				
+				this.setSafeGap(this.getVel());
 
-				this.setPos(this.getPos()+timeUnit*this.getVel()); // update position
+				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel());
 								
-				timer -= timeUnit;
+				timer -= this.getTimeUnit(); // the follower counts reaction time
 		}
 	}
-	private double tau(){
+	private double tau(){ // sensitivity constant
+		double sensitivityConst = 1; // output value
 		
+		double l = 0,m= 0,alpha = 13;
+		// l and m take on 4 to -1 amd -2 to 2 respectively
+		double gap = next.getPos()- this.getCarLength() - this.getPos(); // on the assumption that the origin is located at the front bumper of the car so we move it to the back with the translation of carLength
+		double velocityDiff = next.getVel() - this.getVel();
 		
+		/*	Determination of l and m
+		 * 	gap		vDiff	desired accel	alpha
+		 * 
+		 * small	small	medium
+		 * small	large	large
+		 * ~0		small	small
+		 * ~0		large	large
+		 * large	small	medium
+		 * large	large	large
+		 * */
+		if(adaptiveModel){
+			l = 0;
+			m= 0;
+		}
+		else{
+			
+		}
+		sensitivityConst = (alpha*Math.pow(this.getVel(),m))/(Math.pow(gap,l));
 		
-		return 0.0;
+		return sensitivityConst;
 	}
 	private int leaderActivity(){
 		int sum = 0;
