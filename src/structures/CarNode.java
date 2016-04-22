@@ -19,8 +19,6 @@ public class CarNode {
 	private double carLength;
 	private int leaderActive;
 	
-	boolean adaptiveModel = false;
-	
 	public CarNode (int pos, int vel, int accel, double rTime, double safeGap, double timeUnit,double carLength ,CarNode inFront){
 		
 		this.pos = pos;
@@ -160,7 +158,7 @@ public class CarNode {
 	private double tau(){ // sensitivity constant
 		double sensitivityConst = 1; // output value
 		
-		double l = 0,m= 0,alpha = 13;
+		double l = 0,m= 0;
 		// l and m take on 4 to -1 amd -2 to 2 respectively
 		double gap = next.getPos()- this.getCarLength() - this.getPos(); // on the assumption that the origin is located at the front bumper of the car so we move it to the back with the translation of carLength
 		double velocityDiff = next.getVel() - this.getVel();
@@ -174,37 +172,33 @@ public class CarNode {
 		 * large	small	medium
 		 * large	large	large
 		 * */
-		if(adaptiveModel){
-			l = 0;
-			m= 0;
-		}
-		else{ // Using Ozaki H.(1993) numbers from m,l,c
-			alpha = 5; // this is the c value
-			if(velocityDiff > 0){
-				if(gap<this.getSafeGap()){
-					l = 1;
-					m = -0.2;
-				}
-				else{
-					l = 1;
-					m = 0.9;					
-				}
+
+		// Using Ozaki H.(1993) numbers from m,l,c
+		if(velocityDiff > 0){
+			if(gap<this.getSafeGap()){
+				l = 1;
+				m = -0.2;
 			}
-			else{//velocityDiff < 0
-				if(gap<this.getSafeGap()){
-					l = 0.2;
-					m = 0.9;					
-				}
-				else{
-					l = 1;
-					m = 0.9;					
-				}
+			else{
+				l = 1;
+				m = 0.9;					
 			}
 		}
+		else{//velocityDiff < 0
+			if(gap<this.getSafeGap()){
+				l = 0.2;
+				m = 0.9;					
+			}
+			else{
+				l = 1;
+				m = 0.9;					
+			}
+		}
+	
 		if(this.getVel() == 0)
-			sensitivityConst = (alpha*Math.pow(1,m))/(Math.pow(gap,l));
+			sensitivityConst = (Main.alpha*Math.pow(1,m))/(Math.pow(gap,l));
 		else
-			sensitivityConst = (alpha*Math.pow(this.getVel(),m))/(Math.pow(gap,l));
+			sensitivityConst = (Main.alpha*Math.pow(this.getVel(),m))/(Math.pow(gap,l));
 		
 		return sensitivityConst;
 	}

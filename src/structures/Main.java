@@ -7,33 +7,41 @@ import java.util.Random;
 public class Main {
 	
 	private static final String p =  System.getProperty( "line.separator" );
-	
-	
-	private static int RRX = 0;
-	
-	
+
+	// variable for ease of changing
+
+	private static boolean RRX = false;
+	public static int alpha = 5; // set alpha
+	public static boolean adaptiveModel = false; // use the adaptive model
+	private static double tStep = 10/1000.0; // amount of time per step 
+
 	public static void main(String[] args) {
 		int t=3;// t is the number of cars
 		CarNode[] cars = new CarNode[t];
-		double tStep = 10/1000.0;;
-		if(RRX==0){
+		
+		if(!RRX){
 			tStep = 0.25; 
 		}
 		
-		double[] vp = {1,6}; // acceleration profile
-		int[] tp = {4,10}; // number of time steps each action will last for
+		double[] vp = {1,6,5}; // acceleration profile
+		int[] tp = {4,10,10}; // number of time steps per velocity change
 		
 		cars = populateCars(t, vp, tp, tStep);
 		
 		int timeSteps = calcTimeSteps(tp,cars); // worst case, max timesteps that might be necessary
 		
-		String s = new String();
+		workLoopFO(timeSteps,cars);
 
+	}
+	private static void workLoopFO(int timeSteps, CarNode cars[]){
+		
+		String s = new String();
+		
 		File output = makeFile();
 		
 		try{
 			FileWriter fwriter = new FileWriter(output);
-			initializeHeader(fwriter,t);
+			initializeHeader(fwriter,cars.length);
 
 			for(int i=0; i < timeSteps; i++){ // work loop
 				s = Integer.toString(i);
@@ -49,6 +57,7 @@ public class Main {
 		} catch (IOException x) {
 			System.err.format("IOException: %s%n", x);
 		}
+		
 	}
 	private static void initializeHeader(FileWriter fw, int t){
 		
@@ -70,16 +79,19 @@ public class Main {
 	}
 	private static File makeFile(){
 	
-	String fileName = "Sim";
-	File file = new File((fileName+".csv"));
+	String param = "";
+	if(RRX)
+		param+="RRXN-";
+	if(adaptiveModel)
+		param+="ADAP-";
+	
+	File file = new File("Sim" + "-" + "alpha" + param +Integer.toString(alpha) + ".csv"); 
 	
 	int j = 1;
-	
-	while (file.exists())
-		file = new File(fileName + '-' + Integer.toString(j++) + ".csv"); 
-	
-	try {
-		file.createNewFile();
+	try {	
+		while (!file.createNewFile()){
+			file = new File("Sim" + "-" + "alpha" + param +Integer.toString(alpha) + "-" + Integer.toString(j++) + ".csv"); 
+		}
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
@@ -95,8 +107,8 @@ public class Main {
 	return cars;
 }
 	private static String genHeader(int t){
-	String cars = ",Car 1,";
-	for(int i = 2; i <= t; i++){
+	String cars = "";
+	for(int i = 1; i <= t; i++){
 		cars += ("," + "Car" + i + ",");
 	}
 	cars += '\n';
@@ -117,7 +129,7 @@ public class Main {
 			
 			Random rnd = new Random();
 			
-			if(RRX==1){
+			if(RRX){
 				rxnTime = (rnd.nextInt(100)+1)*10;// rxn time from 10ms to 1000ms
 			}
 			else
@@ -125,7 +137,7 @@ public class Main {
 			cars[0] = new CarNode(0,0, 0, 0, safetyGap,tStep,carLength,null);
 			
 			for(int i = 1; i < numCars; i++){
-				if(RRX == 1){
+				if(RRX){
 					rxnTime = (rnd.nextInt(100)+1)*10;
 				}
 				cars[i] = new CarNode(-(i*carLength+i*safetyGap),0, 0, rxnTime,safetyGap,tStep,carLength,cars[i-1]);
