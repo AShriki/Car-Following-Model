@@ -38,7 +38,7 @@ public class Main {
 			for(int i=0; i < timeSteps; i++){ // work loop
 				s = Integer.toString(i);
 				for(CarNode z : cars){
-					s += (',' + Double.toString(z.getPos())+','+Double.toString(z.getVel())+','+Double.toString(z.getAccel()));
+					s += (',' + Double.toString(z.getPos())+','+Double.toString(z.getVel()));//+','+Double.toString(z.getAccel())
 					z.update(i);// time step
 				}
 				
@@ -54,7 +54,7 @@ public class Main {
 		
 		String s = new String();
 		
-		String header = "Position,Velocity,Acceleration";
+		String header = "Position,Speed";
 		
 		try {
 			
@@ -97,7 +97,7 @@ public class Main {
 	private static String genHeader(int t){
 	String cars = ",Car 1,";
 	for(int i = 2; i <= t; i++){
-		cars += (",," + "Car" + i + ",,");
+		cars += ("," + "Car" + i + ",");
 	}
 	cars += '\n';
 	return cars;

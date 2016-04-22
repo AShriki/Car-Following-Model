@@ -19,7 +19,7 @@ public class CarNode {
 	private double carLength;
 	private int leaderActive;
 	
-	boolean adaptiveModel = true;
+	boolean adaptiveModel = false;
 	
 	public CarNode (int pos, int vel, int accel, double rTime, double safeGap, double timeUnit,double carLength ,CarNode inFront){
 		
@@ -140,9 +140,7 @@ public class CarNode {
 			
 		}
 		else{// is follower
-			// this is the time when a person can react to the car in front
-				//save the velocity of the car in front and set the timer unless there is no change in velocity
-				// if there is a change in velocity set the timer
+
 				if(timer <= 0){
 					this.setGoalVel(next.getVel());
 					this.timer = this.getRxnTime();
@@ -169,11 +167,10 @@ public class CarNode {
 		
 		/*	Determination of l and m
 		 * 	gap		vDiff	desired accel	alpha
-		 * 
+		 *	~0		small	small
+		 *	~0		large	large
 		 * small	small	medium
 		 * small	large	large
-		 * ~0		small	small
-		 * ~0		large	large
 		 * large	small	medium
 		 * large	large	large
 		 * */
@@ -181,10 +178,33 @@ public class CarNode {
 			l = 0;
 			m= 0;
 		}
-		else{
-			
+		else{ // Using Ozaki H.(1993) numbers from m,l,c
+			alpha = 5; // this is the c value
+			if(velocityDiff > 0){
+				if(gap<this.getSafeGap()){
+					l = 1;
+					m = -0.2;
+				}
+				else{
+					l = 1;
+					m = 0.9;					
+				}
+			}
+			else{//velocityDiff < 0
+				if(gap<this.getSafeGap()){
+					l = 0.2;
+					m = 0.9;					
+				}
+				else{
+					l = 1;
+					m = 0.9;					
+				}
+			}
 		}
-		sensitivityConst = (alpha*Math.pow(this.getVel(),m))/(Math.pow(gap,l));
+		if(this.getVel() == 0)
+			sensitivityConst = (alpha*Math.pow(1,m))/(Math.pow(gap,l));
+		else
+			sensitivityConst = (alpha*Math.pow(this.getVel(),m))/(Math.pow(gap,l));
 		
 		return sensitivityConst;
 	}
