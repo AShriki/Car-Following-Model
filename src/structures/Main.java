@@ -23,8 +23,8 @@ public class Main {
 			tStep = 0.25; 
 		}
 		
-		double[] vp = {1,6,5}; // acceleration profile
-		int[] tp = {4,10,10}; // number of time steps per velocity change
+		double[] vp = {10,0,10}; // acceleration profile
+		int[] tp = {10,10,10}; // number of time steps per velocity change
 		
 		cars = populateCars(t, vp, tp, tStep);
 		

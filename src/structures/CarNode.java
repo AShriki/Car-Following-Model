@@ -42,7 +42,7 @@ public class CarNode {
 		return timeUnit;
 	}
 	private void setSafeGap(double s){
-		safeGap = carLength*s;
+		safeGap = carLength*s/10;
 	}
 	
 	public double getSafeGap() {
@@ -144,13 +144,13 @@ public class CarNode {
 					this.timer = this.getRxnTime();
 				}
 				
-				this.setAccel(tau()*(this.getGoalVel() - this.getVel())); // update acceleration
-							
+				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()+0.5*this.getAccel()*Math.pow(this.getTimeUnit(),2));
+				
 				this.setVel(this.getVel() + this.getTimeUnit()*this.getAccel()); // update velocity
 				
+				this.setAccel(tau()*(this.getGoalVel() - this.getVel())); // update acceleration
+											
 				this.setSafeGap(this.getVel());
-
-				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel());
 								
 				timer -= this.getTimeUnit(); // the follower counts reaction time
 		}
@@ -160,7 +160,7 @@ public class CarNode {
 		
 		double l = 0,m= 0;
 		// l and m take on 4 to -1 amd -2 to 2 respectively
-		double gap = next.getPos()- this.getCarLength() - this.getPos(); // on the assumption that the origin is located at the front bumper of the car so we move it to the back with the translation of carLength
+		double gap = next.getPos()- next.getCarLength() - this.getPos(); // on the assumption that the origin is located at the front bumper of the car so we move it to the back with the translation of carLength
 		double velocityDiff = next.getVel() - this.getVel();
 		
 		/*	Determination of l and m
@@ -174,27 +174,14 @@ public class CarNode {
 		 * */
 
 		// Using Ozaki H.(1993) numbers from m,l,c
-		if(velocityDiff > 0){
-			if(gap<this.getSafeGap()){
-				l = 1;
-				m = -0.2;
-			}
-			else{
-				l = 1;
-				m = 0.9;					
-			}
+		if(velocityDiff > 0){// l = 1/0.2, m = 0.9 / -0.2
+			l = 1;
+			m = 0.9;
 		}
 		else{//velocityDiff < 0
-			if(gap<this.getSafeGap()){
-				l = 0.2;
-				m = 0.9;					
-			}
-			else{
-				l = 1;
-				m = 0.9;					
-			}
+			l = 0.2;
+			m = -0.2;									
 		}
-	
 		if(this.getVel() == 0)
 			sensitivityConst = (Main.alpha*Math.pow(1,m))/(Math.pow(gap,l));
 		else
