@@ -203,12 +203,13 @@ public class CarNode {
 		double sensitivityConst = 1; // output value
 		
 		// l and m take on 4 to -1 amd -2 to 2 respectively
-		double gap = next.getPos()- next.getCarLength() - this.getPos(); // on the assumption that the origin is located at the front bumper of the car so we move it to the back with the translation of carLength
 
 		// Using Ozaki H.(1993) numbers from m,l,c
 		
-	// l = 1/0.2, m = 0.9 / -0.2
+		// l = 1/0.2, m = 0.9 / -0.2
 
+		double gap = this.getGap();
+		
 		steadydV();
 		
 		if(this.getVel() == 0)
@@ -258,5 +259,10 @@ public class CarNode {
 		}
 		return 0;
 		
+	}
+	public double getGap() {
+		if(next!= null)
+			return (next.getPos()-next.getCarLength()-this.getPos());
+		return 0;
 	}
 }

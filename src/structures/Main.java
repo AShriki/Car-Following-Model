@@ -11,7 +11,7 @@ public class Main {
 	// variable for ease of changing
 
 	private static boolean RRX = false;
-	public static int alpha = 3; // set alpha
+	public static double alpha = 5; // set alpha
 	public static boolean adaptiveModel = false; // use the adaptive model
 	private static double tStep = 10/1000.0; // amount of time per step 
 	
@@ -19,7 +19,7 @@ public class Main {
 	static int[] tp = {10,10,10,50,20}; // number of time steps per velocity change
 
 	public static void main(String[] args) {
-		int t=6;// t is the number of cars
+		int t=3;// t is the number of cars
 		CarNode[] cars = new CarNode[t];
 		
 		if(!RRX){
@@ -46,7 +46,7 @@ public class Main {
 			for(int i=0; i < timeSteps; i++){ // work loop
 				s = Integer.toString(i);
 				for(CarNode z : cars){
-					s += (',' + Double.toString(z.getPos())+','+Double.toString(z.getVel()))+','+Double.toString(z.getAccel());
+					s += (',' + Double.toString(z.getGap())+','+Double.toString(z.getVel()))+','+Double.toString(z.getAccel());
 					z.update(i);// time step
 				}
 				
@@ -63,7 +63,7 @@ public class Main {
 		
 		String s = new String();
 		
-		String header = "Position,Speed,Acceleration";
+		String header = "Gap,Speed,Acceleration";
 		
 		try {
 			
@@ -85,12 +85,12 @@ public class Main {
 	if(adaptiveModel)
 		param+="ADAP-";
 	
-	File file = new File("Sim" + "-" + "alpha" + param + Integer.toString(alpha) + "C" + t +".csv"); 
+	File file = new File("Sim" + "-" + "alpha" + param + Double.toString(alpha) + "C" + t +".csv"); 
 	
 	int j = 1;
 	try {	
 		while (!file.createNewFile()){
-			file = new File("Sim" + "-" + "alpha" + param +Integer.toString(alpha) + "-" + Integer.toString(j++) + "C" + t + ".csv"); 
+			file = new File("Sim" + "-" + "alpha" + param +Double.toString(alpha) + "-" + Integer.toString(j++) + "C" + t + ".csv"); 
 		}
 	} catch (IOException e) {
 		e.printStackTrace();
@@ -107,9 +107,9 @@ public class Main {
 	return cars;
 }
 	private static String genHeader(int t){
-	String cars = ",Car1,,";
+	String cars = "";
 	for(int i = 1; i <= t; i++){
-		cars += (",,Car" + i + ",,");
+		cars += (",Car" + i + ",,");
 	}
 	cars += '\n';
 	return cars;
