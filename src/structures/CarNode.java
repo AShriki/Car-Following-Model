@@ -5,6 +5,9 @@ public class CarNode {
 	private double pos;
 	private double velocity;
 	private double acceleration;
+	private double prevVelocity;
+	private double lastdV;
+	
 	private boolean isLeader = false;
 	private double rxnTime;
 	private double timer;
@@ -18,6 +21,10 @@ public class CarNode {
 	private int index;
 	private double carLength;
 	private int leaderActive;
+	double dV;
+	boolean isLocked;
+	
+	double l,m;
 	
 	public CarNode (int pos, int vel, int accel, double rTime, double safeGap, double timeUnit,double carLength ,CarNode inFront){
 		
@@ -33,7 +40,12 @@ public class CarNode {
 		this.timeUnit = timeUnit;
 		index = 0;
 		this.carLength = carLength;
-			
+		prevVelocity = 0;
+		lastdV = 0;
+		dV = 0;
+		isLocked = true;
+		l = 0;
+		m = 0;
 	}
 	private double getCarLength(){
 		return carLength;
@@ -80,19 +92,44 @@ public class CarNode {
 		return velocity;
 	}
 	
+	public void setVel(double vel) {
+		velocity = vel;
+	}
+	
+	public double getPrevVel() {
+		return prevVelocity;
+	}
+	
+	public void setPrevVel() {
+		prevVelocity = this.getVel();
+	}
+	
+	
+	private double getLastdV() {
+		return lastdV;
+	}
+	
+	public void setLastdV(double s) {
+		lastdV = s;
+	}
+
+	private double getdV() {
+		return dV;
+	}
+	
+	private void setdV() {
+		dV = this.getVel()-this.getPrevVel();
+	}
 	public double getGoalVel() {
 		return goalVelocity;
 	}
+	
 	public void setGoalVel(double v) {
 		goalVelocity = v;
 	}
 	
 	public double getAccel() {
 		return acceleration;
-	}
-	
-	public void setVel(double vel) {
-		velocity = vel;
 	}
 	
 	public double getTau(){
@@ -116,12 +153,12 @@ public class CarNode {
 		if(isLeader){
 			if(curStep < leaderActive){
 				if(timer <= 0){
-					goalVelocity = vp[index];
+					this.setGoalVel(vp[index]);
 					timer = tp[index];
 					index++;
 				}
 					
-				this.setAccel((goalVelocity - this.getVel()) / (timer*this.getTimeUnit()));
+				this.setAccel((this.getGoalVel() - this.getVel()) / (timer*this.getTimeUnit()));
 				this.setVel(this.getVel() + this.getTimeUnit()*this.getAccel());
 										
 			}
@@ -146,7 +183,14 @@ public class CarNode {
 				
 				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()+0.5*this.getAccel()*Math.pow(this.getTimeUnit(),2));
 				
+				// update the previous dV
+				this.setLastdV(this.getdV()); 
+				
+				this.setPrevVel();
+				
 				this.setVel(this.getVel() + this.getTimeUnit()*this.getAccel()); // update velocity
+				
+				this.setdV();
 				
 				this.setAccel(tau()*(this.getGoalVel() - this.getVel())); // update acceleration
 											
@@ -158,30 +202,15 @@ public class CarNode {
 	private double tau(){ // sensitivity constant
 		double sensitivityConst = 1; // output value
 		
-		double l = 0,m= 0;
 		// l and m take on 4 to -1 amd -2 to 2 respectively
 		double gap = next.getPos()- next.getCarLength() - this.getPos(); // on the assumption that the origin is located at the front bumper of the car so we move it to the back with the translation of carLength
-		double velocityDiff = next.getVel() - this.getVel();
-		
-		/*	Determination of l and m
-		 * 	gap		vDiff	desired accel	alpha
-		 *	~0		small	small
-		 *	~0		large	large
-		 * small	small	medium
-		 * small	large	large
-		 * large	small	medium
-		 * large	large	large
-		 * */
 
 		// Using Ozaki H.(1993) numbers from m,l,c
-		if(velocityDiff > 0){// l = 1/0.2, m = 0.9 / -0.2
-			l = 1;
-			m = 0.9;
-		}
-		else{//velocityDiff < 0
-			l = 0.2;
-			m = -0.2;									
-		}
+		
+	// l = 1/0.2, m = 0.9 / -0.2
+
+		steadydV();
+		
 		if(this.getVel() == 0)
 			sensitivityConst = (Main.alpha*Math.pow(1,m))/(Math.pow(gap,l));
 		else
@@ -194,5 +223,40 @@ public class CarNode {
 		for(int i = 0; i < tp.length; i++)
 			sum+=tp[i];
 		return sum;
+	}
+	
+	private void isLockedManager(){
+		if(!isLocked){
+			boolean a = (this.getLastdV() - this.getdV() <= 0.05);
+			if(a)
+				isLocked = true;
+		}
+	}
+	
+	private int steadydV(){
+		
+		boolean a = (this.getdV() - this.getLastdV() <= 0.05);
+		isLockedManager();
+		if(a && isLocked){
+			if(this.getdV() > 0.0 ){ // isLocked this method until next time slope is constant  
+				l = 0.2;
+				m = -0.2;
+				isLocked = false;
+				return 1;
+			}
+			else if (this.getdV() < 0.0 ){ //
+				l = 1;
+				m = 0.9;	
+				isLocked = false;
+				return -1;
+			}
+			else{
+				l = 1;
+				m = 0.9;
+				return 0;
+			}
+		}
+		return 0;
+		
 	}
 }
