@@ -14,9 +14,13 @@ public class Main {
 	public static double alpha = 5; // set alpha
 	public static boolean adaptiveModel = false; // use the adaptive model
 	private static double tStep = 10/1000.0; // amount of time per step 
+	public static double l = 0.2;
+	public static double m = -0.2;
+	private static double rxnTime = 0.25;
 	
-	static double[] vp = {10,0,10,100,20}; // acceleration profile
-	static int[] tp = {10,10,10,50,20}; // number of time steps per velocity change
+	
+	private static double[] vp = {10,5,20}; // acceleration profile
+	private static int[] tp = {10,10,10}; // number of time steps per velocity change
 
 	public static void main(String[] args) {
 		int t=3;// t is the number of cars
@@ -46,6 +50,7 @@ public class Main {
 			for(int i=0; i < timeSteps; i++){ // work loop
 				s = Integer.toString(i);
 				for(CarNode z : cars){
+					double ds = z.getGap();
 					s += (',' + Double.toString(z.getGap())+','+Double.toString(z.getVel()))+','+Double.toString(z.getAccel());
 					z.update(i);// time step
 				}
@@ -124,7 +129,6 @@ public class Main {
 			System.out.println("Not Enough Cars!");
 		else{
 			
-			double rxnTime = 0;
 			CarNode[] cars = new CarNode[numCars];
 			
 			Random rnd = new Random();
@@ -132,8 +136,7 @@ public class Main {
 			if(RRX){
 				rxnTime = (rnd.nextInt(100)+1)*10;// rxn time from 10ms to 1000ms
 			}
-			else
-				rxnTime = 0.25;
+
 			cars[0] = new CarNode(0,0, 0, 0, safetyGap,tStep,carLength,null);
 			
 			for(int i = 1; i < numCars; i++){

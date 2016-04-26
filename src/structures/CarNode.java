@@ -6,7 +6,6 @@ public class CarNode {
 	private double velocity;
 	private double acceleration;
 	private double prevVelocity;
-	private double lastdV;
 	
 	private boolean isLeader = false;
 	private double rxnTime;
@@ -41,11 +40,9 @@ public class CarNode {
 		index = 0;
 		this.carLength = carLength;
 		prevVelocity = 0;
-		lastdV = 0;
 		dV = 0;
 		isLocked = true;
-		l = 0;
-		m = 0;
+
 	}
 	private double getCarLength(){
 		return carLength;
@@ -104,22 +101,6 @@ public class CarNode {
 		prevVelocity = this.getVel();
 	}
 	
-	
-	private double getLastdV() {
-		return lastdV;
-	}
-	
-	public void setLastdV(double s) {
-		lastdV = s;
-	}
-
-	private double getdV() {
-		return dV;
-	}
-	
-	private void setdV() {
-		dV = this.getVel()-this.getPrevVel();
-	}
 	public double getGoalVel() {
 		return goalVelocity;
 	}
@@ -164,39 +145,36 @@ public class CarNode {
 			}
 			else{
 				this.setAccel(0);
-				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()); 
 				this.setVel(this.getVel());
 			}// end acceleration setter
 			
 			
-			this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()); // update position
+			this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()+0.5*this.getAccel()*Math.pow(this.getTimeUnit(),2));	
+
 								
 			timer -= 1; // the leader counts time steps
 			
 		}
 		else{// is follower
-
+				
 				if(timer <= 0){
+					this.setAccel(tau()*(this.getGoalVel() - this.getVel())); // update acceleration
 					this.setGoalVel(next.getVel());
 					this.timer = this.getRxnTime();
 				}
-				
-				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()+0.5*this.getAccel()*Math.pow(this.getTimeUnit(),2));
-				
-				// update the previous dV
-				this.setLastdV(this.getdV()); 
-				
+								
 				this.setPrevVel();
 				
 				this.setVel(this.getVel() + this.getTimeUnit()*this.getAccel()); // update velocity
-				
-				this.setdV();
-				
-				this.setAccel(tau()*(this.getGoalVel() - this.getVel())); // update acceleration
-											
-				this.setSafeGap(this.getVel());
 								
+				this.setPos(this.getPos() + this.getTimeUnit()*this.getVel()+0.5*this.getAccel()*Math.pow(this.getTimeUnit(),2));								
+												
+				double zdf = this.getGap();
+				
+				this.setSafeGap(this.getVel());
+				
 				timer -= this.getTimeUnit(); // the follower counts reaction time
+				
 		}
 	}
 	private double tau(){ // sensitivity constant
@@ -210,12 +188,16 @@ public class CarNode {
 
 		double gap = this.getGap();
 		
-		steadydV();
+		if(this.getGoalVel()-this.getVel()>0){
+			l = 0.2;
+			m = -0.2;
+		}
+		else{
+			l=1;
+			m=0.9;
+		}
 		
-		if(this.getVel() == 0)
-			sensitivityConst = (Main.alpha*Math.pow(1,m))/(Math.pow(gap,l));
-		else
-			sensitivityConst = (Main.alpha*Math.pow(this.getVel(),m))/(Math.pow(gap,l));
+		sensitivityConst = (Main.alpha*Math.pow(this.getGoalVel(),m))/(Math.pow(gap,l));
 		
 		return sensitivityConst;
 	}
@@ -226,40 +208,7 @@ public class CarNode {
 		return sum;
 	}
 	
-	private void isLockedManager(){
-		if(!isLocked){
-			boolean a = (this.getLastdV() - this.getdV() <= 0.05);
-			if(a)
-				isLocked = true;
-		}
-	}
-	
-	private int steadydV(){
-		
-		boolean a = (this.getdV() - this.getLastdV() <= 0.05);
-		isLockedManager();
-		if(a && isLocked){
-			if(this.getdV() > 0.0 ){ // isLocked this method until next time slope is constant  
-				l = 0.2;
-				m = -0.2;
-				isLocked = false;
-				return 1;
-			}
-			else if (this.getdV() < 0.0 ){ //
-				l = 1;
-				m = 0.9;	
-				isLocked = false;
-				return -1;
-			}
-			else{
-				l = 1;
-				m = 0.9;
-				return 0;
-			}
-		}
-		return 0;
-		
-	}
+
 	public double getGap() {
 		if(next!= null)
 			return (next.getPos()-next.getCarLength()-this.getPos());
