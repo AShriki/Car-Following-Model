@@ -8,29 +8,26 @@ public class Main {
 	
 	private static final String p =  System.getProperty( "line.separator" );
 
-	// variable for ease of changing
+	// variables for ease of changing
 
-	private static boolean RRX = false;
-	public static double alpha = 5; // set alpha
-	public static boolean adaptiveModel = false; // use the adaptive model
+	private static boolean RRX = false; // random reaction time toggle
+	public static double alpha = 45; // set alpha
 	private static double tStep = 10/1000.0; // amount of time per step 
-	public static double l = 0.2;
-	public static double m = -0.2;
-	private static double rxnTime = 0.25;
+	private static double rxnTime = 0.25; // only matters if RRX is false
 	
 	
 	private static double[] vp = {10,5,20}; // acceleration profile
 	private static int[] tp = {10,10,10}; // number of time steps per velocity change
 
 	public static void main(String[] args) {
-		int t=3;// t is the number of cars
+		int t=500;// t is the number of cars
 		CarNode[] cars = new CarNode[t];
 		
 		if(!RRX){
 			tStep = 0.25; 
 		}
 		
-		cars = populateCars(t, vp, tp, tStep);
+		cars = populateCars(t, vp, tp);
 		
 		int timeSteps = calcTimeSteps(tp,cars); // worst case, max timesteps that might be necessary
 		
@@ -50,7 +47,6 @@ public class Main {
 			for(int i=0; i < timeSteps; i++){ // work loop
 				s = Integer.toString(i);
 				for(CarNode z : cars){
-					double ds = z.getGap();
 					s += (',' + Double.toString(z.getGap())+','+Double.toString(z.getVel()))+','+Double.toString(z.getAccel());
 					z.update(i);// time step
 				}
@@ -87,8 +83,6 @@ public class Main {
 	String param = "";
 	if(RRX)
 		param+="RRXN-";
-	if(adaptiveModel)
-		param+="ADAP-";
 	
 	File file = new File("Sim" + "-" + "alpha" + param + Double.toString(alpha) + "C" + t +".csv"); 
 	
@@ -120,7 +114,7 @@ public class Main {
 	return cars;
 }
 	
-	private static CarNode[] populateCars(int numCars,double ap[],int tp[], double tStep){
+	private static CarNode[] populateCars(int numCars,double ap[],int tp[]){
 		
 		int carLength = 3; // car length estimated in meters
 		int safetyGap = carLength; // safety gap is one car length at 0 speed
@@ -141,7 +135,7 @@ public class Main {
 			
 			for(int i = 1; i < numCars; i++){
 				if(RRX){
-					rxnTime = (rnd.nextInt(100)+1)*10;
+					rxnTime = (rnd.nextInt(100)+1)*tStep;
 				}
 				cars[i] = new CarNode(-(i*carLength+i*safetyGap),0, 0, rxnTime,safetyGap,tStep,carLength,cars[i-1]);
 			}
